@@ -47,6 +47,17 @@ def process_throttle_value(value):
     max_duty = 65025  # For 100% duty cycle with 16-bit resolution
     return int((value - 1000) / 1000 * (max_duty - min_duty) + min_duty)
 
+def get_switch_status(value):
+    if value < 1200:
+        return "Position 1"
+    elif value < 1800:
+        return "Position 2"
+    else:
+        return "Position 3"
+
+def calculate_duty_percentage(duty_value, max_duty=65025):
+    return (duty_value / max_duty) * 100
+
 while True:
     ibus.read_channels()
     ibus.check_timeout()
@@ -55,16 +66,20 @@ while True:
     throttle_value = process_throttle_value(ibus.get_channel(3))
     esc_pwm.duty_u16(throttle_value)
     
+    # Calculate duty cycle percentage
+    duty_percentage = calculate_duty_percentage(throttle_value)
+    
     # Print switch statuses
     swa_status = get_switch_status(ibus.get_channel(7))
     swb_status = get_switch_status(ibus.get_channel(8))
     swc_status = get_switch_status(ibus.get_channel(9))
     swd_status = get_switch_status(ibus.get_channel(10))
     
-    print("Ch1: {} | Ch2: {} | Ch3: {} | Ch4: {} | SWA: {} | SWB: {} | SWC: {} | SWD: {}".format(
+    print("Ch1: {} | Ch2: {} | Ch3: {} (duty: {:.2f}%) | Ch4: {} | SWA: {} | SWB: {} | SWC: {} | SWD: {}".format(
         ibus.get_channel(1),
         ibus.get_channel(2),
         ibus.get_channel(3),
+        duty_percentage,
         ibus.get_channel(4),
         swa_status,
         swb_status,
@@ -72,11 +87,3 @@ while True:
         swd_status
     ), end='\r')  # Overwrite the current line
     time.sleep(0.1)  # Adjust this delay for faster/slower updates
-
-def get_switch_status(value):
-    if value < 1200:
-        return "Position 1"
-    elif value < 1800:
-        return "Position 2"
-    else:
-        return "Position 3"
