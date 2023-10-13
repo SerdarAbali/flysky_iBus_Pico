@@ -30,13 +30,13 @@ class IBUS:
         else:
             return None
 
-# Setup UART for RX only
+# Setup UART for RX, it is the very last pin in iBus slot (servo texted) (TX slot only for receiving sensor telemetry back to transmitter)
 uart = machine.UART(0, baudrate=115200, rx=machine.Pin(1))
 
 # Setup PWM for BLDC ESC
-esc_pwm_pin = machine.Pin(2)  # Choose an appropriate GPIO pin
+esc_pwm_pin = machine.Pin(2)  # GP2 pin on pico
 esc_pwm = machine.PWM(esc_pwm_pin)
-esc_pwm.freq(50)  # Set frequency to 50Hz (typical for ESCs)
+esc_pwm.freq(50)  # Set frequency to 50Hz or test frequencies and decide what your ESC more proficient with
 
 ibus = IBUS(uart)
 
@@ -85,5 +85,5 @@ while True:
         swb_status,
         swc_status,
         swd_status
-    ), end='\r')  # Overwrite the current line
-    time.sleep(0.1)  # Adjust this delay for faster/slower updates
+    ), end='\r')
+    time.sleep(0.1)
