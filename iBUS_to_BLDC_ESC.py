@@ -33,6 +33,7 @@ class IBUS:
 
 uart = machine.UART(0, baudrate=115200, rx=machine.Pin(1))
 gp3 = machine.Pin(3, machine.Pin.IN)
+reverse_pin = machine.Pin(4, machine.Pin.IN)  # Initialize as input (high-impedance)
 
 def process_throttle_value(value):
     min_duty = 0
@@ -47,9 +48,6 @@ def get_switch_status(value):
     else:
         return "Position 3"
 
-def calculate_duty_percentage(duty_value, max_duty=65025):
-    return (duty_value / max_duty) * 100
-
 ibus = IBUS(uart)
 
 while True:
@@ -57,6 +55,7 @@ while True:
     ibus.check_timeout()
     
     ch1_value = ibus.get_channel(1)
+    
     if 1000 <= ch1_value <= 2000:
         if gp3.value() == machine.Pin.IN:
             gp3.init(mode=machine.Pin.OUT)
@@ -69,19 +68,21 @@ while True:
         throttle_value = process_throttle_value(ibus.get_channel(3))
         esc_pwm.duty_u16(throttle_value)
         
-        duty_percentage = calculate_duty_percentage(throttle_value)
-        
         swa_status = get_switch_status(ibus.get_channel(7))
         swb_status = get_switch_status(ibus.get_channel(8))
         swc_status = get_switch_status(ibus.get_channel(9))
         swd_status = get_switch_status(ibus.get_channel(10))
         
-        print("Ch1: {} | Ch2: {} | Ch3: {} (duty: {:.2f}%) | Ch4: {} | SWA: {} | SWB: {} | SWC: {} | SWD: {}".format(
+        if swa_status == "Position 3":
+            reverse_pin.init(mode=machine.Pin.OUT)
+            reverse_pin.low()  # Connect the brown wire to GND
+        else:
+            reverse_pin.init(mode=machine.Pin.IN)  # Disconnect the brown wire
+
+        print("Ch1: {} | Ch2: {} | Ch3: {} | SWA: {} | SWB: {} | SWC: {} | SWD: {}".format(
             ibus.get_channel(1),
             ibus.get_channel(2),
             ibus.get_channel(3),
-            duty_percentage,
-            ibus.get_channel(4),
             swa_status,
             swb_status,
             swc_status,
@@ -92,4 +93,3 @@ while True:
             gp3.init(mode=machine.Pin.IN)
     
     time.sleep(0.1)
-
