@@ -1,6 +1,11 @@
 import machine
 import time
 
+#Pico GP1 to RC receiver RX, right hand side, iBus mid pid vcc, left pin ground
+#Pico GP2 to ESC pwm (also ground)
+#Pico GP3/4 to ESC reverse (also ground)
+
+
 class IBUS:
     def __init__(self, uart):
         self.uart = uart
@@ -31,9 +36,9 @@ class IBUS:
         else:
             return None
 
-uart = machine.UART(0, baudrate=115200, rx=machine.Pin(1))
-gp3 = machine.Pin(3, machine.Pin.IN)
-reverse_pin = machine.Pin(4, machine.Pin.IN)  # Initialize as input (high-impedance)
+uart = machine.UART(0, baudrate=115200, rx=machine.Pin(1)) #Pico GP1
+gp3 = machine.Pin(3, machine.Pin.IN) #Pico GP2
+reverse_pin = machine.Pin(4, machine.Pin.IN)  # #Pico GP3
 
 def process_throttle_value(value):
     min_duty = 0
@@ -93,3 +98,6 @@ while True:
             gp3.init(mode=machine.Pin.IN)
     
     time.sleep(0.1)
+
+
+
